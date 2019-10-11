@@ -11,8 +11,8 @@
 
     <Title>Kestrel InlineSockets</Title>
     <!--<Owners></Owners>-->
-    <Authors>lodejard@microsoft.com</Authors>
-    <PackageProjectUrl>https://github.com/lodejard/KestrelInlineSockets</PackageProjectUrl>
+    <Authors>Microsoft,Bing</Authors>
+    <PackageProjectUrl>https://github.com/microsoft/kestrel-inline-sockets</PackageProjectUrl>
     <!-- -->
     <Copyright>Copyright 2019</Copyright>
     <Company>Microsoft</Company>
