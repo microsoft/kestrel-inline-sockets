@@ -1,0 +1,57 @@
+<Project>
+  <PropertyGroup>
+    <MsBuildAllProjects>$(MsBuildAllProjects);$(MsBuildThisFileFullPath)</MsBuildAllProjects>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <VersionPrefix>0.1.$(BUILD_BUILDID.PadLeft(1, '0'))</VersionPrefix>
+    
+    <!-- workaround because NoWarn doesn't disable CS7034 -->
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+
+    <Title>Kestrel InlineSockets</Title>
+    <!--<Owners></Owners>-->
+    <Authors>lodejard@microsoft.com</Authors>
+    <PackageProjectUrl>https://github.com/lodejard/KestrelInlineSockets</PackageProjectUrl>
+    <!-- -->
+    <Copyright>Copyright 2019</Copyright>
+    <Company>Microsoft</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <!-- projectSourceUrl -->
+    <!-- docsUrl -->
+    <!-- mailingListUrl -->
+    <!-- bugTrackerUrl -->
+    <PackageTags>kestrel sockets aspnetcore</PackageTags>
+    
+    <Description>A Kestrel ITransportFactory implementation which enables a web application to send response data using blocking sockets APIs</Description>
+    <!--<ReleaseNotes>ReleaseNotes</ReleaseNotes>-->
+    
+    <RepositoryUrl>$(BUILD_REPOSITORY_URI)</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryBranch>$(BUILD_SOURCEBRANCHNAME)</RepositoryBranch>
+    <RepositoryCommit>$(BUILD_SOURCEVERSION)</RepositoryCommit>
+    <!--<NuspecProperties></NuspecProperties>-->
+
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)build\analyzers.ruleset</CodeAnalysisRuleSet>
+    <TreatWarningsAsErrors Condition=" '$(Configuration)' == 'Release' ">true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+
+    <!-- CS7034: The specified version string does not conform to the required format - major[.minor[.build[.revision]]] -->
+    <!-- CS7035: The specified version string does not conform to the recommended format - major.minor.build.revision -->
+    <!-- doc related (temporary) nowarns are CS1591;SA1600;SA1601 -->
+    <NoWarn>1701;1702;1705;NU1701;CS1998;CS1591;SA1600;SA1601;CS7034;CS7035</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)build\stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)build\analyzers.ruleset" Link="analyzers.ruleset" />
+  </ItemGroup>
+
+</Project>

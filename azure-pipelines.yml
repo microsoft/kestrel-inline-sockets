@@ -1,0 +1,32 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- bash: |
+    set -e
+    dotnet build
+    dotnet test --logger trx
+    dotnet pack
+  displayName: 'Build script'
+  env:
+    Configuration: Release
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: VSTest
+    testResultsFiles: '**/TestResults/*.trx'
+
+- task: NuGetCommand@2
+  condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'master'))
+  inputs:
+    command: push
+    packagesToPush: '$(Build.SourcesDirectory)/**/bin/**/*.nupkg'
+    publishVstsFeed: kestrel-inline-sockets
