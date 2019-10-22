@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 using Microsoft.Bing.AspNetCore.Connections.InlineSocket.Logging;
 using Microsoft.Bing.AspNetCore.Connections.InlineSocket.Memory;
 using Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network;
-using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
 {
     public class SocketPipeReader : PipeReader, IDisposable
     {
         private readonly IConnectionLogger _logger;
+        private readonly InlineSocketsOptions _options;
         private readonly IConnection _connection;
         private readonly INetworkSocket _socket;
         private readonly RollingMemory _buffer;
@@ -35,6 +35,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
             INetworkSocket socket)
         {
             _logger = logger;
+            _options = options;
             _connection = connection;
             _socket = socket;
             _buffer = new RollingMemory(options.MemoryPool);
@@ -67,9 +68,17 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
                     // memory based on default page size for MemoryPool being used
                     var memory = _buffer.GetTrailingMemory();
 
-                    _logger.LogTrace("TODO: ReadStarting");
+                    if (_options.HighVolumeLogging)
+                    {
+                        _logger.ReadStarting(_connection.ConnectionId, memory.Length);
+                    }
+
                     var bytes = await _socket.ReceiveAsync(memory, cancellationToken);
-                    _logger.LogTrace("TODO: ReadComplete {bytes}", bytes);
+
+                    if (_options.HighVolumeLogging)
+                    {
+                        _logger.ReadSucceeded(_connection.ConnectionId, bytes);
+                    }
 
                     if (bytes != 0)
                     {
@@ -86,25 +95,25 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
                         // reading 0 bytes means the remote client has
                         // sent FIN and no more bytes will be received
                         _isCompleted = true;
-                        _connection.FireConnectionClosed();
                     }
                 }
                 catch (TaskCanceledException)
                 {
-                    _logger.LogTrace("TODO: ReadCanceled");
+                    _logger.ReadCanceled(_connection.ConnectionId);
                     _isCanceled = true;
-                    _connection.FireConnectionClosed();
                 }
-                catch (Exception ex)
+                catch (Exception error)
                 {
-                    _logger.LogTrace(ex, "TODO: ReadFailed");
+                    _logger.ReadFailed(_connection.ConnectionId, error);
 
                     // Return ReadResult.IsCompleted == true from now on
                     // because we assume any read exceptions are not temporary
                     _isCompleted = true;
+
+                    // inform the protocol layer the remote client is abnormally unreadable
                     _connection.FireConnectionClosed();
 #if NETSTANDARD2_0
-                    FireWriterCompleted(ex);
+                    FireWriterCompleted(error);
 #endif
                 }
             }
@@ -129,14 +138,14 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
 
         public override void CancelPendingRead()
         {
-            _logger.LogTrace("TODO: CancelPendingRead");
+            _logger.PendingReadCanceling(_connection.ConnectionId);
 
             _socket.CancelPendingRead();
         }
 
         public override void Complete(Exception exception)
         {
-            _logger.LogTrace(exception, "TODO: PipeReaderComplete");
+            _logger.PipeReaderComplete(_connection.ConnectionId, exception);
 
             _isCompleted = true;
 #if NETSTANDARD2_0

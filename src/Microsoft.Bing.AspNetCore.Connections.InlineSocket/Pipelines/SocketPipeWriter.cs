@@ -8,18 +8,18 @@ using System.Threading.Tasks;
 using Microsoft.Bing.AspNetCore.Connections.InlineSocket.Logging;
 using Microsoft.Bing.AspNetCore.Connections.InlineSocket.Memory;
 using Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network;
-using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
 {
     public class SocketPipeWriter : PipeWriter, IDisposable
     {
         private readonly IConnectionLogger _logger;
+        private readonly InlineSocketsOptions _options;
         private readonly INetworkSocket _socket;
         private readonly RollingMemory _buffer;
+        private readonly IConnection _connection;
 
 #if NETSTANDARD2_0
-        private readonly IConnection _connection;
         private readonly CancellationTokenSource _readerCompleted = new CancellationTokenSource();
         private Exception _readerCompletedException;
 #endif
@@ -34,9 +34,8 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
             INetworkSocket socket)
         {
             _logger = logger;
-#if NETSTANDARD2_0
+            _options = options;
             _connection = connection;
-#endif
             _socket = socket;
             _buffer = new RollingMemory(options.MemoryPool);
         }
@@ -76,16 +75,29 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
                 {
                     var memory = _buffer.GetOccupiedMemory();
 
-                    _logger.LogTrace("TODO: SendStarting {bytes}", memory.Length);
+                    if (_options.HighVolumeLogging)
+                    {
+                        _logger.WriteStarting(_connection.ConnectionId, (int)memory.Length);
+                    }
+
                     var bytes = _socket.Send(memory);
-                    _logger.LogTrace("TODO: SendComplete {bytes}", bytes);
+
+                    if (_options.HighVolumeLogging)
+                    {
+                        _logger.WriteSucceeded(_connection.ConnectionId, bytes);
+                    }
 
                     _buffer.ConsumeOccupiedMemory(bytes);
                 }
             }
+            catch (TaskCanceledException)
+            {
+                _logger.WriteCanceled(_connection.ConnectionId);
+                _isCanceled = true;
+            }
             catch (Exception ex)
             {
-                _logger.LogTrace(ex, "TODO: SendError");
+                _logger.WriteFailed(_connection.ConnectionId, ex);
 
                 // Return FlushResult.IsCompleted true from now on
                 // because we assume any write exceptions are not temporary
@@ -102,12 +114,13 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
 
         public override void CancelPendingFlush()
         {
+            _logger.PendingWriteCanceling(_connection.ConnectionId);
             _isCanceled = true;
         }
 
         public override void Complete(Exception exception = null)
         {
-            _logger.LogTrace(exception, "TODO: PipeWriterComplete");
+            _logger.PipeWriterComplete(_connection.ConnectionId, exception);
 
             _isCompleted = true;
 #if NETSTANDARD2_0

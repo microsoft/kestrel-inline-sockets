@@ -35,7 +35,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Tests.Fixtures
         {
             foreach (var log in LogItems.ToArray())
             {
-                writeLine($"{log.LogLevel} {log.CategoryName}.{log.EventId} {log.Message}");
+                writeLine($"{log.LogLevel} {log.CategoryName}.{log.EventId.Name}[{log.EventId.Id}] {log.Message}");
             }
 
             var fatalLogs = LogItems.Where(log => FatalLogTypes.Contains((log.CategoryName, log.EventId)));
@@ -127,7 +127,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Tests.Fixtures
 
             public override string ToString()
             {
-                return $"{CategoryName}.{EventId} {LogLevel} {Message}";
+                return $"{CategoryName}.{EventId.Name}[{EventId.Id}] {LogLevel} {Message} {Exception?.Message}";
             }
         }
     }

@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class InlineSocketsExtensions
+    public static partial class InlineSocketsExtensions
     {
         public static IServiceCollection AddInlineSocketsTransport(this IServiceCollection services)
         {

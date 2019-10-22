@@ -20,6 +20,8 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
 
         public bool? NoDelay { get; set; }
 
+        public bool HighVolumeLogging { get; set; }
+
         public Func<IListener> CreateListener { get; set; }
 
         public Func<INetworkSocket, IConnection> CreateConnection { get; set; }

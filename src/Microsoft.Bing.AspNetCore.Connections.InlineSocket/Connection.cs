@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Bing.AspNetCore.Connections.InlineSocket.Logging;
 using Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network;
-using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
 {
@@ -22,7 +21,9 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
         private readonly PipeReader _socketInput;
         private readonly PipeWriter _socketOutput;
         private readonly CancellationTokenSource _connectionClosedTokenSource;
+        private readonly CancellationTokenRegistration _connectionClosedTokenRegistration;
 
+        private int _disposed;
         private string _connectionId;
 
         public Connection(
@@ -40,7 +41,12 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
             (_socketInput, _socketOutput) = options.CreateSocketPipelines(this, socket);
 
             _connectionClosedTokenSource = new CancellationTokenSource();
-            _connectionClosedTokenSource.Token.Register(() => _logger.LogTrace("TODO: ConnectionClosed"));
+            _connectionClosedTokenRegistration = _connectionClosedTokenSource.Token.Register(LogConnectionClosed);
+
+            void LogConnectionClosed()
+            {
+                _logger.ConnectionClosed(ConnectionId);
+            }
         }
 
         public virtual IFeatureCollection Features { get; private set; }
@@ -57,25 +63,38 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
 
         public virtual async ValueTask DisposeAsync()
         {
-            _logger.LogDebug("TODO: DisposeAsync {ConnectionId}", ConnectionId);
+            if (Interlocked.Exchange(ref _disposed, 1) == 0)
+            {
+                _logger.ConnectionDisposed(ConnectionId, isAsync: true);
 
-            await _socket.DisposeAsync();
+                (_socketInput as IDisposable)?.Dispose();
+                (_socketOutput as IDisposable)?.Dispose();
+                await _socket.DisposeAsync();
 
-            ((IDisposable)this).Dispose();
+                _connectionClosedTokenRegistration.Dispose();
+                _connectionClosedTokenSource.Dispose();
+#if NETSTANDARD2_0
+                _connectionCloseRequestedSource.Dispose();
+#endif
+            }
         }
 
         public virtual void Dispose()
         {
-            _logger.LogDebug("TODO: Dispose {ConnectionId}", ConnectionId);
+            if (Interlocked.Exchange(ref _disposed, 1) == 0)
+            {
+                _logger.ConnectionDisposed(ConnectionId, isAsync: false);
 
-            (_socketInput as IDisposable)?.Dispose();
-            (_socketOutput as IDisposable)?.Dispose();
-            _socket.Dispose();
+                (_socketInput as IDisposable)?.Dispose();
+                (_socketOutput as IDisposable)?.Dispose();
+                _socket.Dispose();
 
-            _connectionClosedTokenSource.Dispose();
+                _connectionClosedTokenRegistration.Dispose();
+                _connectionClosedTokenSource.Dispose();
 #if NETSTANDARD2_0
-            _connectionCloseRequestedSource.Dispose();
+                _connectionCloseRequestedSource.Dispose();
 #endif
+            }
         }
 
         public virtual void CancelPendingRead()
@@ -90,7 +109,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
 
         public virtual void Abort(ConnectionAbortedException abortReason)
         {
-            _logger.LogDebug(abortReason, "TODO: Abort {ConnectionId}", ConnectionId);
+            _logger.ConnectionAborting(ConnectionId, abortReason);
 
             // immediate FIN so client understands server will not complete current response or accept subsequent requests
             _socket.ShutdownSend();

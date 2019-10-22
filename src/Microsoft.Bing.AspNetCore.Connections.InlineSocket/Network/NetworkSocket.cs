@@ -9,13 +9,11 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network
 {
     public class NetworkSocket : INetworkSocket
     {
-        private readonly Extensions.Logging.ILogger<NetworkProvider> _logger;
         private readonly Socket _socket;
 
         private readonly object _receiveSync = new object();
@@ -25,9 +23,8 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network
         private int _disposed;
         private bool _pendingReadCanceled;
 
-        public NetworkSocket(Extensions.Logging.ILogger<NetworkProvider> logger, Socket socket)
+        public NetworkSocket(Socket socket)
         {
-            _logger = logger;
             _socket = socket;
             _receiveEventArgs = new SocketAsyncEventArgs();
             _receiveEventArgs.Completed += ReceiveAsyncCompleted;
@@ -41,8 +38,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network
         {
             if (Interlocked.Exchange(ref _disposed, 1) == 0)
             {
-                _logger.LogTrace("TODO: Dispose");
-
                 if (_socket.Connected)
                 {
                     _socket.Disconnect(reuseSocket: false);
@@ -57,8 +52,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network
         {
             if (Interlocked.Exchange(ref _disposed, 1) == 0)
             {
-                _logger.LogTrace("TODO: DisposeAsync");
-
                 if (_socket.Connected)
                 {
                     using var disconnectEventArgs = new SocketAsyncEventArgs();
@@ -163,8 +156,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network
 
         public virtual void CancelPendingRead()
         {
-            _logger.LogTrace("TODO: CancelPendingRead");
-
             TaskCompletionSource<int> receiveAsyncTaskSource;
 
             lock (_receiveSync)
@@ -180,8 +171,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network
 
         public virtual int Send(ReadOnlySequence<byte> data)
         {
-            _logger.LogTrace("TODO: Send");
-
             // TODO: avoid allocating this List<T>
             var segments = new List<ArraySegment<byte>>();
             foreach (var buffer in data)
@@ -195,8 +184,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network
 
         public virtual void ShutdownSend()
         {
-            _logger.LogTrace("TODO: ShutdownSend");
-
             _socket.Shutdown(SocketShutdown.Send);
         }
     }

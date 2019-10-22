@@ -21,7 +21,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
 
         void IConnectionLifetimeNotificationFeature.RequestClose()
         {
-            _logger.LogDebug("TODO: CloseRequested {ConnectionId}", ConnectionId);
+            _logger.ConnectionClosing(ConnectionId);
 
             _connectionCloseRequestedSource.Cancel(throwOnFirstException: false);
         }

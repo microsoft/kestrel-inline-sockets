@@ -20,6 +20,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Tests.Fixtures
                 .AddLogging(builder => loggingFixture?.ConfigureLogging(builder))
                 .AddTransient<IConfigureOptions<KestrelServerOptions>, SetKestrelServerOptions>()
                 .AddSingleton<IServer, KestrelServer>()
+                .Configure<InlineSocketsOptions>(options => options.HighVolumeLogging = true)
                 .BuildServiceProvider();
         }
 
