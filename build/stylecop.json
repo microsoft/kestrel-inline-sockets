@@ -3,7 +3,7 @@
     "settings": {
       "documentationRules": {
         "companyName": "Microsoft Corporation",
-        "copyrightText": "Copyright (c) {companyName}. All rights reserved.\r\nLicensed under the {licenseName} license.",
+        "copyrightText": "Copyright (c) {companyName}.\r\nLicensed under the {licenseName} license.",
         "variables": {
           "licenseName": "MIT",
           "licenseFile": "LICENSE"
