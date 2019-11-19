@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Bing.AspNetCore.Connections.InlineSocket.TestHelpers;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -271,6 +273,172 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Tests
             await Test.Server.StopAsync();
 
             Assert.Equal(3, (from log in Test.Logging.LogItems where log.EventId.Name == "SocketAccepted" select log).Count());
+        }
+
+
+        [Theory]
+        [MemberData(nameof(Schemes))]
+        public virtual async Task RequestHeadersCanSpanMemoryPages(string scheme)
+        {
+            var logger = Test.Services.GetService<ILogger<Http1Tests>>();
+            Test.EndPoint.Scheme = scheme;
+
+            var connectionIds = new List<string>();
+
+            Test.App.OnRequest = async message =>
+            {
+                var httpContext = new DefaultHttpContext(message.Features);
+
+                for (var index = 0; index != 128; ++index)
+                {
+                    httpContext.Response.Headers["x-header-" + index] = new string('x', 4096 / 128);
+                }
+                
+                logger.LogInformation("Calling WriteAsync");
+                await httpContext.Response.WriteAsync("chunk1");
+                logger.LogInformation("Calling WriteAsync");
+                await httpContext.Response.WriteAsync("chunk2");
+            };
+
+            await Test.Server.StartAsync();
+
+            var response1 = await Test.Client.GetStringAsync("/request1");
+            var response2 = await Test.Client.GetStringAsync("/request2");
+            var response3 = await Test.Client.GetStringAsync("/request3");
+
+            await Test.Server.StopAsync();
+        }
+
+
+        [Theory]
+        [MemberData(nameof(Schemes))]
+        public virtual async Task InitialChunkCanSpanMemoryPages(string scheme)
+        {
+            var logger = Test.Services.GetService<ILogger<Http1Tests>>();
+            Test.EndPoint.Scheme = scheme;
+
+            var connectionIds = new List<string>();
+
+            Test.App.OnRequest = async message =>
+            {
+                var httpContext = new DefaultHttpContext(message.Features);
+
+                httpContext.Response.Headers["x-header"] = new string('x', 3978); // good: 3977 bad: 3978
+
+                logger.LogInformation("Calling WriteAsync");
+                await httpContext.Response.WriteAsync(new string('y', 1024));
+            };
+
+            await Test.Server.StartAsync();
+
+            var response1 = await Test.Client.GetStringAsync("/request1");
+            var response2 = await Test.Client.GetStringAsync("/request2");
+            var response3 = await Test.Client.GetStringAsync("/request3");
+
+            await Test.Server.StopAsync();
+        }
+
+
+        [Theory]
+        [InlineData("http", 3977, 5)]
+        [InlineData("http", 3977, 1024)]
+        [InlineData("http", 3978, 5)]
+        [InlineData("http", 3978, 1024)]
+        public virtual async Task InitialChunkStringCanSpanMemoryPages(string scheme, int headerLength, int textLength)
+        {
+            var logger = Test.Services.GetService<ILogger<Http1Tests>>();
+            Test.EndPoint.Scheme = scheme;
+
+            var connectionIds = new List<string>();
+
+            Test.App.OnRequest = async message =>
+            {
+                var httpContext = new DefaultHttpContext(message.Features);
+
+                httpContext.Response.Headers["x-header"] = new string('x', headerLength); // good: 3977 bad: 3978
+
+                logger.LogInformation("Calling WriteAsync");
+                await httpContext.Response.WriteAsync(new string('y', textLength));
+            };
+
+            await Test.Server.StartAsync();
+
+            var response1 = await Test.Client.GetStringAsync("/request1");
+            var response2 = await Test.Client.GetStringAsync("/request2");
+            var response3 = await Test.Client.GetStringAsync("/request3");
+
+            await Test.Server.StopAsync();
+        }
+
+        [Theory]
+        [InlineData("http", 3977, 5)]
+        [InlineData("http", 3977, 1024)]
+        [InlineData("http", 3978, 5)]
+        [InlineData("http", 3978, 1024)]
+        [InlineData("http", 3980, 5)]
+        [InlineData("http", 3981, 5)]
+        [InlineData("http", 3982, 5)]
+        [InlineData("http", 3983, 5)]
+        [InlineData("http", 3984, 5)]
+        public virtual async Task InitialChunkBytesCanSpanMemoryPages(string scheme, int headerLength, int byteLength)
+        {
+            var logger = Test.Services.GetService<ILogger<Http1Tests>>();
+            Test.EndPoint.Scheme = scheme;
+
+            var connectionIds = new List<string>();
+
+            Test.App.OnRequest = async message =>
+            {
+                var httpContext = new DefaultHttpContext(message.Features);
+
+                httpContext.Response.Headers["x-header"] = new string('x', headerLength);
+
+                logger.LogInformation("Calling WriteAsync");
+                await httpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes( new string('y', byteLength)));
+            };
+
+            await Test.Server.StartAsync();
+
+            var response1 = await Test.Client.GetStringAsync("/request1");
+            var response2 = await Test.Client.GetStringAsync("/request2");
+            var response3 = await Test.Client.GetStringAsync("/request3");
+
+            await Test.Server.StopAsync();
+        }
+
+        [Theory]
+        [MemberData(nameof(Schemes))]
+        public virtual async Task ResponseBodyCanSpanMemoryPages(string scheme)
+        {
+            var logger = Test.Services.GetService<ILogger<Http1Tests>>();
+            Test.EndPoint.Scheme = scheme;
+
+            var connectionIds = new List<string>();
+
+            Test.App.OnRequest = async message =>
+            {
+                var httpContext = new DefaultHttpContext(message.Features);
+
+                for (var index = 0; index != 4096; ++index)
+                {
+                    logger.LogInformation("Calling WriteAsync of length {ChunkLength}", index);
+                    await httpContext.Response.Body.WriteAsync(new byte[1] { (byte)'g' });
+                }
+
+                for (var index = 0; index != 4096; ++index)
+                {
+                    logger.LogInformation("Calling WriteAsync of length {ChunkLength}", index);
+                    await httpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes(new string('f', index)));
+                }
+            };
+
+            await Test.Server.StartAsync();
+
+            var response1 = await Test.Client.GetStringAsync("/request1");
+            var response2 = await Test.Client.GetStringAsync("/request2");
+            var response3 = await Test.Client.GetStringAsync("/request3");
+
+            await Test.Server.StopAsync();
         }
     }
 }

@@ -23,6 +23,11 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Memory
             set => base.Next = value;
         }
 
+        public void Shrink(int length)
+        {
+            Memory = Memory.Slice(0, length);
+        }
+
         public void Dispose()
         {
             _rental.Dispose();

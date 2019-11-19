@@ -128,6 +128,12 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Memory
                 _lastIndex = 0;
             }
 
+            // special case, last page does not have enough memory to hold sizeHint
+            if (_lastIndex + sizeHint > _lastSegment.Memory.Length)
+            {
+                _lastSegment.Shrink(_lastIndex);
+            }
+
             // special case, last page is completely full.
             // allocate and append a new unoccupied last page.
             if (_lastIndex == _lastSegment.Memory.Length)
