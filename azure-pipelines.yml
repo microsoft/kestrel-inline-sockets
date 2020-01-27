@@ -28,5 +28,5 @@ steps:
   condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'master'))
   inputs:
     command: push
-    packagesToPush: '$(Build.SourcesDirectory)/**/bin/**/*.nupkg'
+    packagesToPush: '$(Build.SourcesDirectory)/**/bin/**/*.symbols.nupkg'
     publishVstsFeed: kestrel-inline-sockets
