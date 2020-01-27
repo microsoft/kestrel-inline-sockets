@@ -7,7 +7,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network
 {
     public class NetworkListenerSettings
     {
-        public IPEndPoint IPEndPoint { get; set; }
+        public EndPoint EndPoint { get; set; }
 
         public bool? AllowNatTraversal { get; set; }
 

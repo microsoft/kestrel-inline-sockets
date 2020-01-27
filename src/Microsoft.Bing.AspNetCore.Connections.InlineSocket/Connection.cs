@@ -73,9 +73,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
 
                 _connectionClosedTokenRegistration.Dispose();
                 _connectionClosedTokenSource.Dispose();
-#if NETSTANDARD2_0
-                _connectionCloseRequestedSource.Dispose();
-#endif
             }
         }
 
@@ -91,9 +88,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
 
                 _connectionClosedTokenRegistration.Dispose();
                 _connectionClosedTokenSource.Dispose();
-#if NETSTANDARD2_0
-                _connectionCloseRequestedSource.Dispose();
-#endif
             }
         }
 

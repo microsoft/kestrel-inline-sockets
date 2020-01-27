@@ -11,9 +11,9 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network
 {
     public interface INetworkSocket : IDisposable, IAsyncDisposable
     {
-        IPEndPoint LocalEndPoint { get; }
+        EndPoint LocalEndPoint { get; }
 
-        IPEndPoint RemoteEndPoint { get; }
+        EndPoint RemoteEndPoint { get; }
 
         Task<int> ReceiveAsync(Memory<byte> buffers, CancellationToken cancellationToken);
 

@@ -4,6 +4,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
     <VersionPrefix>0.1.$(BUILD_BUILDID.PadLeft(1, '0'))</VersionPrefix>
     
     <!-- workaround because NoWarn doesn't disable CS7034 -->
@@ -52,6 +55,7 @@
 
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)build\analyzers.ruleset" Link="analyzers.ruleset" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
   </ItemGroup>
 
 </Project>

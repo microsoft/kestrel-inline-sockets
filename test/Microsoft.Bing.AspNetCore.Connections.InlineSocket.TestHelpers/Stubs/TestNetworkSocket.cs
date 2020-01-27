@@ -12,9 +12,9 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Tests.Stubs
 {
     public class TestNetworkSocket : INetworkSocket
     {
-        public IPEndPoint LocalEndPoint { get; set; }
+        public EndPoint LocalEndPoint { get; set; }
 
-        public IPEndPoint RemoteEndPoint { get; set; }
+        public EndPoint RemoteEndPoint { get; set; }
 
         public bool IsDisposed { get; set; }
 

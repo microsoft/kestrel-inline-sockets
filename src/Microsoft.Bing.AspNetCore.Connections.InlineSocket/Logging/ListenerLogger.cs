@@ -9,8 +9,8 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Logging
 {
     public class ListenerLogger : ForwardingLogger, IListenerLogger
     {
-        private static readonly LoggerMessage<IPEndPoint> _logBindListenSocket = (LogLevel.Debug, nameof(BindListenSocket), "Binding listen socket to {IPEndPoint}");
-        private static readonly LoggerMessage<IPEndPoint> _logUnbindListenSocket = (LogLevel.Debug, nameof(UnbindListenSocket), "Unbinding listen socket from {IPEndPoint}");
+        private static readonly LoggerMessage<EndPoint> _logBindListenSocket = (LogLevel.Debug, nameof(BindListenSocket), "Binding listen socket to {EndPoint}");
+        private static readonly LoggerMessage<EndPoint> _logUnbindListenSocket = (LogLevel.Debug, nameof(UnbindListenSocket), "Unbinding listen socket from {EndPoint}");
         private static readonly LoggerMessage _logStopListener = (LogLevel.Debug, nameof(StopListener), "Inline sockets transport is stopped");
         private static readonly LoggerMessage<EndPoint, EndPoint> _logSocketAccepted = (LogLevel.Information, nameof(SocketAccepted), "Socket accepted from {RemoteEndPoint} to {LocalEndPoint}");
         private static readonly LoggerMessage<string> _logConnectionDispatchFailed = (LogLevel.Debug, nameof(ConnectionDispatchFailed), "Unexpected failure thrown by IConnectionDispatcher.OnConnection of connection '{ConnectionId}'");
@@ -21,9 +21,9 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Logging
         {
         }
 
-        public virtual void BindListenSocket(IPEndPoint ipEndPoint) => _logBindListenSocket.Log(this, ipEndPoint, null);
+        public virtual void BindListenSocket(EndPoint endPoint) => _logBindListenSocket.Log(this, endPoint, null);
 
-        public virtual void UnbindListenSocket(IPEndPoint ipEndPoint) => _logUnbindListenSocket.Log(this, ipEndPoint, null);
+        public virtual void UnbindListenSocket(EndPoint endPoint) => _logUnbindListenSocket.Log(this, endPoint, null);
 
         public virtual void StopListener() => _logStopListener.Log(this, null);
 

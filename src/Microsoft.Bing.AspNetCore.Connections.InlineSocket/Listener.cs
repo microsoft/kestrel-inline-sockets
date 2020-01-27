@@ -16,7 +16,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
         private readonly IListenerLogger _logger;
         private readonly InlineSocketsOptions _options;
         private readonly INetworkProvider _networkProvider;
-        private IPEndPoint _ipEndpoint;
+        private EndPoint _endpoint;
         private INetworkListener _listener;
         private Action _listenerCancellationCallback;
 
@@ -30,24 +30,16 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
             _networkProvider = networkProvider;
         }
 
-        public virtual EndPoint EndPoint => _ipEndpoint;
+        public virtual EndPoint EndPoint => _endpoint;
 
         public virtual async ValueTask BindAsync(EndPoint endpoint, CancellationToken cancellationToken = default)
         {
-            if (endpoint is IPEndPoint ipEndpoint)
-            {
-                _ipEndpoint = ipEndpoint;
-            }
-            else
-            {
-                throw new NotSupportedException("Only IPEndPoint are currently supported by inline sockets.");
-            }
-
-            _logger.BindListenSocket(_ipEndpoint);
+            _endpoint = endpoint;
+            _logger.BindListenSocket(_endpoint);
 
             _listener = _networkProvider.CreateListener(new NetworkListenerSettings
             {
-                IPEndPoint = _ipEndpoint,
+                EndPoint = _endpoint,
                 AllowNatTraversal = _options.AllowNatTraversal,
                 ExclusiveAddressUse = _options.ExclusiveAddressUse,
                 ListenerBacklog = _options.ListenBacklog,
@@ -64,7 +56,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
 
         public virtual async ValueTask UnbindAsync(CancellationToken cancellationToken = default)
         {
-            _logger.UnbindListenSocket(_ipEndpoint);
+            _logger.UnbindListenSocket(_endpoint);
             _listener.Stop();
         }
 

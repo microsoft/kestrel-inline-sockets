@@ -8,7 +8,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Tests.Fixtures
 {
     public class EndPointFixture
     {
-        public IPEndPoint IPEndPoint { get; set; }
+        public EndPoint IPEndPoint { get; set; }
         
         public string Scheme { get; set; } = "http";
         

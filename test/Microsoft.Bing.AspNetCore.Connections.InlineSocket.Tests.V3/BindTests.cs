@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -40,6 +41,45 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Tests
             client.Dispose();
             await connection.DisposeAsync();
             await listener.DisposeAsync();
+        }
+
+        [Fact]
+        public async Task UnixBindCreatesSocketWhichAcceptsConnection()
+        {
+            using var test = new TestContext();
+
+            // create listener and bind to unused port
+            using var listener = test.Options.InlineSocketsOptions.CreateListener();
+            test.EndPoint.FindUnusedPort();
+
+            var tmp = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
+
+            File.Delete(tmp);
+
+            await listener.BindAsync(new UnixDomainSocketEndPoint(tmp));
+
+            // accept connection which will not be available yet
+            var acceptTask = listener.AcceptAsync(test.Timeout.Token);
+            Assert.False(acceptTask.IsCompleted);
+
+            // create client socket and connect
+            var client = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+            client.Connect(new UnixDomainSocketEndPoint(tmp));
+
+            // finish accepting connection from listener
+            using var connection = await acceptTask;
+
+            // verify connection's remote port is same as client's local port
+            var localIPEndPoint = (UnixDomainSocketEndPoint)client.LocalEndPoint;
+            var remoteIPEndPoint = (UnixDomainSocketEndPoint)connection.RemoteEndPoint;
+            Assert.Equal(localIPEndPoint.AddressFamily, remoteIPEndPoint.AddressFamily);
+
+            client.Dispose();
+            await connection.DisposeAsync();
+            await listener.UnbindAsync();
+            await listener.DisposeAsync();
+
+            File.Delete(tmp);
         }
     }
 }

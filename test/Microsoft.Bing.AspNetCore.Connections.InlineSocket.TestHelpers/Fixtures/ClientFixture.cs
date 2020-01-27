@@ -18,12 +18,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.TestHelpers.Fixture
             _endPoint = endPoint;
             _timeout = timeout;
 
-#if NETSTANDARD2_0
-            HttpMessageHandler handler = new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = (sender, certificate, chain, errors) => RemoteCertificateValidation(certificate, chain, errors),
-            };
-#else
             HttpMessageHandler handler = new SocketsHttpHandler
             {
                 SslOptions =
@@ -31,7 +25,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.TestHelpers.Fixture
                     RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => RemoteCertificateValidation(certificate, chain, errors),
                 }
             };
-#endif
 
             _httpClient = new HttpClient(handler, disposeHandler: true);
         }

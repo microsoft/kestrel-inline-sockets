@@ -30,9 +30,9 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Network
             _receiveEventArgs.Completed += ReceiveAsyncCompleted;
         }
 
-        public virtual IPEndPoint LocalEndPoint => (IPEndPoint)_socket.LocalEndPoint;
+        public virtual EndPoint LocalEndPoint => _socket.LocalEndPoint;
 
-        public virtual IPEndPoint RemoteEndPoint => (IPEndPoint)_socket.RemoteEndPoint;
+        public virtual EndPoint RemoteEndPoint => _socket.RemoteEndPoint;
 
         public virtual void Dispose()
         {

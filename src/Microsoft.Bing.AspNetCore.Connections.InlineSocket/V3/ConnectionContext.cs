@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-#if NETCOREAPP3_0
 using System;
 using System.Collections.Generic;
 using System.IO.Pipelines;
@@ -81,4 +80,3 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
         }
     }
 }
-#endif

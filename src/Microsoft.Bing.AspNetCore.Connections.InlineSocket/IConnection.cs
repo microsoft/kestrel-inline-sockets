@@ -23,11 +23,5 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
         void FireConnectionClosed();
 
         void CancelPendingRead();
-
-#if NETSTANDARD2_0
-        void OnPipeReaderComplete(Exception exception);
-
-        void OnPipeWriterComplete(Exception exception);
-#endif
     }
 }

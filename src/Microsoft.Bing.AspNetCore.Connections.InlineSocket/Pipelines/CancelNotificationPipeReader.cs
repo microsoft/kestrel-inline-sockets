@@ -44,9 +44,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
 
         public override void Complete(Exception exception = null) => Inner.Complete(exception);
 
-#if !NETSTANDARD2_0
         [Obsolete]
-#endif
         public override void OnWriterCompleted(Action<Exception, object> callback, object state) => Inner.OnWriterCompleted(callback, state);
     }
 }

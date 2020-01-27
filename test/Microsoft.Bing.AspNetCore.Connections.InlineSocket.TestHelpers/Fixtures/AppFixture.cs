@@ -38,11 +38,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Tests.Fixtures
             {
                 get
                 {
-#if NETSTANDARD2_0
-                    return Get<IHttpResponseFeature>().Body;
-#else
                     return Get<IHttpResponseBodyFeature>().Stream;
-#endif
                 }
             }
         }

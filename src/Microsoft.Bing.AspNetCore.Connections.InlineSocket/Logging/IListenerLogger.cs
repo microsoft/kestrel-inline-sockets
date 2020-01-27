@@ -9,9 +9,9 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Logging
 {
     public interface IListenerLogger : ILogger
     {
-        void BindListenSocket(IPEndPoint ipEndPoint);
+        void BindListenSocket(EndPoint endPoint);
 
-        void UnbindListenSocket(IPEndPoint ipEndPoint);
+        void UnbindListenSocket(EndPoint endPoint);
 
         void StopListener();
 

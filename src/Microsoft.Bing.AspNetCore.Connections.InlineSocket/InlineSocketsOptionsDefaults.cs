@@ -23,15 +23,11 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
         {
             _configure = options =>
             {
-#if NETSTANDARD2_0
-                var memoryPool = Microsoft.AspNetCore.Server.Kestrel.Transport.Abstractions.Internal.KestrelMemoryPool.Create();
-#else
                 var socketTransportOptions = new Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportOptions();
                 var socketTransportOptionsTypeInfo = socketTransportOptions.GetType().GetTypeInfo();
                 var memoryPoolFactoryProperty = socketTransportOptionsTypeInfo.GetDeclaredProperty("MemoryPoolFactory");
                 var memoryPoolFactory = memoryPoolFactoryProperty.GetValue(socketTransportOptions) as Func<MemoryPool<byte>>;
                 var memoryPool = memoryPoolFactory.Invoke();
-#endif
 
                 options.MemoryPool = memoryPool;
                 options.CreateListener = CreateListener;

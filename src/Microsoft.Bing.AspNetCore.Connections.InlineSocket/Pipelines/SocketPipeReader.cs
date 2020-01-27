@@ -19,11 +19,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
         private readonly INetworkSocket _socket;
         private readonly RollingMemory _buffer;
 
-#if NETSTANDARD2_0
-        private readonly CancellationTokenSource _writerCompleted = new CancellationTokenSource();
-        private Exception _writerCompletedException;
-#endif
-
         private bool _bufferHasUnexaminedData;
         private bool _isCanceled;
         private bool _isCompleted;
@@ -48,9 +43,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
         public void Dispose()
         {
             _buffer.Dispose();
-#if NETSTANDARD2_0
-            _writerCompleted.Dispose();
-#endif
         }
 
         public override bool TryRead(out ReadResult result)
@@ -112,9 +104,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
 
                     // inform the protocol layer the remote client is abnormally unreadable
                     _connection.FireConnectionClosed();
-#if NETSTANDARD2_0
-                    FireWriterCompleted(error);
-#endif
                 }
             }
 
@@ -148,22 +137,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
             _logger.PipeReaderComplete(_connection.ConnectionId, exception);
 
             _isCompleted = true;
-#if NETSTANDARD2_0
-            _connection.OnPipeReaderComplete(exception);
-#endif
         }
-
-#if NETSTANDARD2_0
-        public override void OnWriterCompleted(Action<Exception, object> callback, object state)
-        {
-            _writerCompleted.Token.Register(() => callback(_writerCompletedException, state));
-        }
-
-        public void FireWriterCompleted(Exception exception)
-        {
-            _writerCompletedException = exception;
-            _writerCompleted.Cancel();
-        }
-#endif
     }
 }

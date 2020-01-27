@@ -19,11 +19,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
         private readonly RollingMemory _buffer;
         private readonly IConnection _connection;
 
-#if NETSTANDARD2_0
-        private readonly CancellationTokenSource _readerCompleted = new CancellationTokenSource();
-        private Exception _readerCompletedException;
-#endif
-
         private bool _isCanceled;
         private bool _isCompleted;
 
@@ -47,9 +42,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
         public void Dispose()
         {
             _buffer.Dispose();
-#if NETSTANDARD2_0
-            _readerCompleted.Dispose();
-#endif
         }
 
         public override Memory<byte> GetMemory(int sizeHint)
@@ -102,9 +94,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
                 // Return FlushResult.IsCompleted true from now on
                 // because we assume any write exceptions are not temporary
                 _isCompleted = true;
-#if NETSTANDARD2_0
-                FireReaderCompleted(ex);
-#endif
             }
 
             return new ValueTask<FlushResult>(new FlushResult(
@@ -123,22 +112,6 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Pipelines
             _logger.PipeWriterComplete(_connection.ConnectionId, exception);
 
             _isCompleted = true;
-#if NETSTANDARD2_0
-            _connection.OnPipeWriterComplete(exception);
-#endif
         }
-
-#if NETSTANDARD2_0
-        public override void OnReaderCompleted(Action<Exception, object> callback, object state)
-        {
-            _readerCompleted.Token.Register(() => callback(_readerCompletedException, state));
-        }
-
-        private void FireReaderCompleted(Exception exception)
-        {
-            _readerCompletedException = exception;
-            _readerCompleted.Cancel();
-        }
-#endif
     }
 }

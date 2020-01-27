@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-#if NETCOREAPP3_0
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Bing.AspNetCore.Connections.InlineSocket;
@@ -25,4 +24,3 @@ namespace Microsoft.Extensions.DependencyInjection
         }
     }
 }
-#endif
