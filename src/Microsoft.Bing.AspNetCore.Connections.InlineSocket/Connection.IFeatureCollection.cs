@@ -19,6 +19,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket
             typeof(IConnectionTransportFeature),
             typeof(IMemoryPoolFeature),
             typeof(IConnectionLifetimeFeature),
+            typeof(IConnectionOutputControlFeature),
         };
 
         bool IFeatureCollection.IsReadOnly => true;

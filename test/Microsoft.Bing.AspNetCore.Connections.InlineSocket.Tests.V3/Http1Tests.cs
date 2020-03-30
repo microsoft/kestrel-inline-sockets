@@ -9,6 +9,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Bing.AspNetCore.Connections.InlineSocket.TestHelpers;
@@ -293,7 +294,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Tests
                 {
                     httpContext.Response.Headers["x-header-" + index] = new string('x', 4096 / 128);
                 }
-                
+
                 logger.LogInformation("Calling WriteAsync");
                 await httpContext.Response.WriteAsync("chunk1");
                 logger.LogInformation("Calling WriteAsync");
@@ -394,7 +395,7 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Tests
                 httpContext.Response.Headers["x-header"] = new string('x', headerLength);
 
                 logger.LogInformation("Calling WriteAsync");
-                await httpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes( new string('y', byteLength)));
+                await httpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes(new string('y', byteLength)));
             };
 
             await Test.Server.StartAsync();
@@ -439,6 +440,57 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Tests
             var response3 = await Test.Client.GetStringAsync("/request3");
 
             await Test.Server.StopAsync();
+        }
+
+        [Theory]
+        [InlineData("http", 3977, 5, 1)]
+        [InlineData("http", 3977, 1024, 1)]
+        [InlineData("http", 3978, 5, 1)]
+        [InlineData("http", 3978, 1024, 1)]
+        [InlineData("http", 3978, 128, 200)]
+        [InlineData("http", 3978, 8192, 4)]
+        [InlineData("https", 3978, 128, 200)]
+        [InlineData("https", 3978, 8192, 4)]
+        public virtual async Task SuspendingOutputCausesExactlyOneWrite(string scheme, int headerLength, int byteLength, int writeCount)
+        {
+            var logger = Test.Services.GetService<ILogger<Http1Tests>>();
+            Test.EndPoint.Scheme = scheme;
+
+            var connectionIds = new List<string>();
+
+            Test.App.OnRequest = async message =>
+            {
+                var httpContext = new DefaultHttpContext(message.Features);
+
+                var outputControl = httpContext.Features.Get<IConnectionOutputControlFeature>();
+                if (outputControl != null)
+                {
+                    outputControl.Suspend();
+                    httpContext.Response.OnCompleted(async state => ((IConnectionOutputControlFeature)state).Resume(), outputControl);
+                }
+
+                httpContext.Response.Headers["x-header"] = new string('x', headerLength);
+
+                logger.LogInformation("Calling WriteAsync");
+                foreach (var loop in Enumerable.Range(0, writeCount))
+                {
+                    await httpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes(new string('y', byteLength)));
+                }
+            };
+
+            await Test.Server.StartAsync();
+
+            var responseWarmup = await Test.Client.GetStringAsync("/warmup");
+
+            var skipLogItems = Test.Logging.LogItems.Count;
+
+            var response1 = await Test.Client.GetStringAsync("/request1");
+            var response2 = await Test.Client.GetStringAsync("/request2");
+            var response3 = await Test.Client.GetStringAsync("/request3");
+
+            await Test.Server.StopAsync();
+
+            Assert.Equal(3, (from log in Test.Logging.LogItems.Skip(skipLogItems) where log.EventId.Name == "WriteStarting" select log).Count());
         }
     }
 }

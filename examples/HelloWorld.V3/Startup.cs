@@ -3,8 +3,10 @@
 
 using System;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -26,6 +28,20 @@ namespace HelloWorld
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.Use(next => async context =>
+            {
+                var outputControl = context.Features.Get<IConnectionOutputControlFeature>();
+                var httpResponse = context.Features.Get<IHttpResponseFeature>();
+
+                if (outputControl != null && httpResponse != null)
+                {
+                    outputControl.Suspend();
+                    httpResponse.OnCompleted(async state => ((IConnectionOutputControlFeature)state).Resume(), outputControl);
+                }
+
+                await next(context);
+            });
 
             app.Run(async (context) =>
             {

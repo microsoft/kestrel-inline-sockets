@@ -25,6 +25,8 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Logging
         private static readonly LoggerMessage<string> _logWriteFailed = (LogLevel.Information, nameof(WriteFailed), "Failed to write on connection \"{ConnectionId}\"");
         private static readonly LoggerMessage<string, int> _logWriteStarting = (LogLevel.Trace, nameof(WriteStarting), "Starting write on connection \"{ConnectionId}\" for {BufferLength} bytes");
         private static readonly LoggerMessage<string, int> _logWriteSucceeded = (LogLevel.Debug, nameof(WriteSucceeded), "Write on connection \"{ConnectionId}\" send {BytesWritten} bytes");
+        private static readonly LoggerMessage<string, int> _logPipeWriterSuspended = (LogLevel.Trace, nameof(PipeWriterSuspended), "Writing on connection \"{ConnectionId}\" suspended; {SuspendCount} calls to resume are expected");
+        private static readonly LoggerMessage<string, int> _logPipeWriterResumed = (LogLevel.Trace, nameof(PipeWriterResumed), "Writing on connection \"{ConnectionId}\" resumed; {SuspendCount} more calls to resume are expected");
 
         public ConnectionLogger(ILoggerFactory loggerFactory)
             : base(loggerFactory, "Microsoft.Bing.AspNetCore.Connections.InlineSocket.Connection")
@@ -62,5 +64,9 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Logging
         public virtual void WriteStarting(string connectionId, int bufferLength) => _logWriteStarting.Log(this, connectionId, bufferLength, null);
 
         public virtual void WriteSucceeded(string connectionId, int bytesWritten) => _logWriteSucceeded.Log(this, connectionId, bytesWritten, null);
+
+        public virtual void PipeWriterSuspended(string connectionId, int suspendCount) => _logPipeWriterSuspended.Log(this, connectionId, suspendCount, null);
+
+        public virtual void PipeWriterResumed(string connectionId, int suspendCount) => _logPipeWriterResumed.Log(this, connectionId, suspendCount, null);
     }
 }

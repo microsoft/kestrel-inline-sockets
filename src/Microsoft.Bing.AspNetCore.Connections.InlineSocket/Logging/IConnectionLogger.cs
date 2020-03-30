@@ -40,5 +40,9 @@ namespace Microsoft.Bing.AspNetCore.Connections.InlineSocket.Logging
         void PendingWriteCanceling(string connectionId);
 
         void WriteCanceled(string connectionId);
+
+        void PipeWriterSuspended(string connectionId, int suspendCount);
+
+        void PipeWriterResumed(string connectionId, int suspendCount);
     }
 }
